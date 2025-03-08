@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Запускать workflow при создании тегов, начинающихся с 'v'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Шаг 1: Проверка кода
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Получить всю историю коммитов
+
+      # Шаг 2: Установка Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      # Шаг 3: Установка зависимостей
+      - name: Install dependencies
+        run: npm install
+
+      # Шаг 4: Настройка Git
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      # Шаг 5: Генерация CHANGELOG.md
+      - name: Generate CHANGELOG
+        run: npm run changelog
+
+      # Шаг 6: Извлечение изменений из CHANGELOG.md
+      - name: Extract changelog
+        id: extract_changelog
+        run: |
+          CHANGELOG=$(awk '/## \[/{flag=1;next}/## \[/{flag=0}flag' CHANGELOG.md)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # Шаг 7: Создание тега и коммита
+      - name: Create tag and commit
+        run: |
+          git add CHANGELOG.md
+          git commit -m "chore(release): обновить CHANGELOG.md"
+          git tag v$(node -p "require('./package.json').version")
+          git push origin main --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Шаг 8: Создание релиза на GitHub
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v$(node -p "require('./package.json').version")
+          release_name: Release v$(node -p "require('./package.json').version")
+          body: |
+            ${{ steps.extract_changelog.outputs.changelog }}
