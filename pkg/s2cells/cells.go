@@ -18,17 +18,21 @@ func CountCellsAtLevel(level int) int {
 // GenerateCellsAtLevel генерирует все ячейки на указанном уровне
 func GenerateCellsAtLevel(level int) []s2.CellID {
 	var cellIDs []s2.CellID
-	numCells := CountCellsAtLevel(level)
 
-	// Начинаем с первой ячейки на уровне 0
+	// Находим первую ячейку на уровне Level
 	cellID := s2.CellIDFromFace(0).ChildBeginAtLevel(level)
 
-	// Перебираем ячейки до тех пор, пока не достигнем нужного количества
-	for len(cellIDs) < numCells {
-		if cellID.Level() == level {
-			cellIDs = append(cellIDs, cellID)
-		}
+	// Итерируемся по всем ячейкам на уровне Level
+	for {
+		// Переходим к следующей ячейке
 		cellID = cellID.Next()
+		// Добавляем ячейку в список
+		cellIDs = append(cellIDs, cellID)
+		// Если мы вернулись к начальной ячейке, завершаем цикл
+		if cellID == s2.CellIDFromFace(0).ChildBeginAtLevel(level) {
+			break
+		}
+
 	}
 
 	return cellIDs
