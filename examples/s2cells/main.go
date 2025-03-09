@@ -9,10 +9,10 @@ import (
 func main() {
 	level := 2
 	cells := s2cells.GenerateCellsAtLevel(level)
-	err := s2cells.SaveCellsToFile(cells, "level2_cells.txt")
+	err := s2cells.SaveCellsToFile(cells, fmt.Sprintf("level-%d_cells.txt", level)) // Сохраняем ячейки в файл (например, level2_cells.txt)
 	if err != nil {
 		fmt.Println("Error:", err)
 	} else {
-		fmt.Println("Cells saved to level2_cells.txt")
+		fmt.Printf("Cells saved to level-%d_cells.txt\n", level)
 	}
 }
